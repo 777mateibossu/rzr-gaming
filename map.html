@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Global Control</title>
+
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    background: black;
+    color: #00ff66;
+    font-family: Consolas, monospace;
+    overflow: hidden;
+}
+
+/* HEADER */
+#header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 70px;
+    background: black;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ff3333;
+    font-size: 22px;
+}
+
+/* ACCOUNT */
+#account {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    color: #ff3333;
+    cursor: pointer;
+    z-index: 11;
+}
+
+/* MAP */
+#mapWrap {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#world {
+    width: 85%;
+    max-width: 1500px;
+    filter: brightness(0.9);
+}
+
+/* OVERLAY */
+#overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+}
+
+/* MISSILE */
+#missile {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    padding: 14px 22px;
+    border: 1px solid red;
+    background: black;
+    color: red;
+    cursor: pointer;
+    z-index: 12;
+}
+
+/* TERMINATE */
+#terminate {
+    position: fixed;
+    inset: 0;
+    background: black;
+    color: red;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    z-index: 20;
+}
+
+/* ALERT FLASH */
+.flash {
+    animation: flash 0.3s infinite;
+}
+@keyframes flash {
+    0%,100%{background:black}
+    50%{background:#500}
+}
+</style>
+</head>
+
+<body>
+
+<div id="header">Is this what you seek..?</div>
+<div id="account" onclick="location.href='profile.html'">Your account</div>
+
+<div id="mapWrap">
+    <img id="world"
+         src="https://cdn.sanity.io/images/r09655ln/production/7bfd175f23147a7a71ba600c22b09cab9a1f5cb4-1897x929.png">
+</div>
+
+<canvas id="overlay"></canvas>
+<canvas id="figure"></canvas>
+
+<button id="missile" onclick="launch()">MISSILE</button>
+
+<div id="terminate">SESSION TERMINATED.</div>
+
+<script>
+/* ================= SESSION TIMER ================= */
+setTimeout(()=>{
+    alert("ACCESS OVERDUE");
+    location.href="login.html";
+},30000);
+
+/* ================= CANVAS SETUP ================= */
+const o = document.getElementById("overlay");
+const ctx = o.getContext("2d");
+o.width = innerWidth;
+o.height = innerHeight;
+
+const f = document.getElementById("figure");
+const fctx = f.getContext("2d");
+f.width = 300;
+f.height = 500;
+f.style.position="fixed";
+f.style.left="20px";
+f.style.bottom="40px";
+
+/* ================= MAP ANIMATION ================= */
+const nodes = [
+    {x:.33,y:.45},{x:.48,y:.38},{x:.40,y:.62},{x:.72,y:.42},{x:.78,y:.40}
+];
+
+function drawMap(){
+    ctx.clearRect(0,0,o.width,o.height);
+
+    ctx.strokeStyle="#00ff66";
+    nodes.forEach(a=>{
+        nodes.forEach(b=>{
+            if(Math.random()>.8){
+                ctx.beginPath();
+                ctx.moveTo(a.x*o.width,a.y*o.height);
+                ctx.lineTo(b.x*o.width,b.y*o.height);
+                ctx.stroke();
+            }
+        });
+    });
+
+    nodes.forEach(n=>{
+        ctx.beginPath();
+        ctx.arc(n.x*o.width,n.y*o.height,4+Math.random()*3,0,Math.PI*2);
+        ctx.fillStyle="red";
+        ctx.fill();
+    });
+}
+setInterval(drawMap,800);
+
+/* ================= HACKER FIGURE ================= */
+const chars="01";
+const cols=20;
+const drops=Array.from({length:cols},()=>Math.random()*f.height);
+
+function drawFigure(){
+    fctx.fillStyle="rgba(0,0,0,0.2)";
+    fctx.fillRect(0,0,f.width,f.height);
+    fctx.fillStyle="#00ff66";
+    fctx.font="14px monospace";
+
+    drops.forEach((y,i)=>{
+        const x=i*14;
+        if(
+            (y>20 && y<80 && x>80 && x<160) ||   // head
+            (y>80 && y<260 && x>60 && x<200) ||  // torso
+            (y>100 && y<300 && (x<60 || x>200)) // shoulders
+        ){
+            fctx.fillText(chars[Math.random()*2|0],x,y);
+        }
+        drops[i]=y>f.height?0:y+12;
+    });
+}
+setInterval(drawFigure,50);
+
+/* ================= MISSILE SEQUENCE ================= */
+function launch(){
+    document.body.classList.add("flash");
+
+    let shake=0;
+    const shakeInt=setInterval(()=>{
+        document.getElementById("world").style.transform =
+            `translate(${Math.random()*10-5}px,${Math.random()*10-5}px)`;
+        shake++;
+        if(shake>15){
+            clearInterval(shakeInt);
+            document.getElementById("terminate").style.display="flex";
+            setTimeout(()=>location.href="login.html",3000);
+        }
+    },100);
+}
+</script>
+
+</body>
+</html>
+
